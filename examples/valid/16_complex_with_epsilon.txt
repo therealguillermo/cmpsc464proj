@@ -1,0 +1,7 @@
+5
+S=AB|AC|AD|AE|$
+A=a
+B=b
+C=c
+D=d
+

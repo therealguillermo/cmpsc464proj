@@ -1,0 +1,6 @@
+4
+S=AB|AC|a
+A=a|b
+B=b
+C=c
+

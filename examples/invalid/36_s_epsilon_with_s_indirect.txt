@@ -1,0 +1,8 @@
+6
+S=AB|$
+A=CD
+B=b
+C=SE
+D=d
+E=e
+
