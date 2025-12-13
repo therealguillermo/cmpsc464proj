@@ -1,0 +1,7 @@
+6
+S=AX|UB|a|YA|AY
+Y=AX|UB|a|YA|AY
+A=b|AX|UB|a|YA|AY
+X=YA
+U=a
+B=b

@@ -1,0 +1,9 @@
+7
+S=AB
+A=CD
+B=EF
+C=c
+D=d
+E=e
+F=f
+

@@ -1,0 +1,7 @@
+5
+S=AB
+A=CD
+B=b
+C=c
+D=d
+
