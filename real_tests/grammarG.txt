@@ -1,0 +1,6 @@
+5
+S=TT|c|YX
+T=TT|c|YX
+X=TZ
+Y=a
+Z=b

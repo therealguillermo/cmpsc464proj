@@ -14,8 +14,10 @@ from typing import Tuple
 
 
 # Rough estimate: how many operations can we do per second?
-# This is a conservative guess - actual speed depends on your computer
-OPERATIONS_PER_SECOND = 1000000  # 1 million operations per second
+# Modern computers can do 100 billion to 1 trillion operations per second.
+# Accounting for ~1000x overhead due to inefficiency, checking, etc.,
+# we use a conservative estimate of 10 billion operations per second.
+OPERATIONS_PER_SECOND = 10_000_000_000  # 10 billion operations per second
 
 
 def estimate_worst_case_operations(grammar: Grammar, string_length: int) -> int:
@@ -119,11 +121,20 @@ def is_feasible(grammar: Grammar, string_length: int) -> Tuple[bool, str]:
     # Estimate how many operations we'll need
     estimated_operations = estimate_worst_case_operations(grammar, string_length)
     
-    # Estimate how long it will take (in seconds)
+    # Key threshold: 1 billion possibilities × 1000x overhead = 1 trillion operations
+    # This is the threshold for feasibility in a few minutes
+    ONE_TRILLION_OPS = 1_000_000_000_000  # 1 trillion operations
+    
+    # Direct check: if we're under 1 trillion operations, it's feasible
+    if estimated_operations <= ONE_TRILLION_OPS:
+        estimated_seconds = estimated_operations / OPERATIONS_PER_SECOND
+        return True, f"Estimated operations: {estimated_operations:,} (≤ 1 trillion threshold, ~{estimated_seconds:.2f} seconds)"
+    
+    # If over 1 trillion, estimate time and check against time limit
     estimated_seconds = estimated_operations / OPERATIONS_PER_SECOND
+    time_limit_seconds = 300  # 5 minutes (few minutes)
     
-    # Check if it's within our 1-minute limit
-    if estimated_seconds > 60:
-        return False, f"Estimated worst-case time: {estimated_seconds:.2f} seconds (exceeds 60 seconds)"
+    if estimated_seconds > time_limit_seconds:
+        return False, f"Estimated operations: {estimated_operations:,} (exceeds 1 trillion threshold, ~{estimated_seconds:.2f} seconds, exceeds {time_limit_seconds} seconds)"
     
-    return True, f"Estimated worst-case time: {estimated_seconds:.4f} seconds (within 60 seconds)"
+    return True, f"Estimated operations: {estimated_operations:,} (exceeds 1 trillion threshold but ~{estimated_seconds:.2f} seconds within {time_limit_seconds} seconds)"
