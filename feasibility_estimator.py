@@ -110,15 +110,18 @@ def is_feasible(grammar: Grammar, string_length: int) -> Tuple[bool, str]:
     if string_length == 1:
         return True, "Single character check is very fast"
     
-    # Very long strings are definitely too slow
-    if string_length > 20:
-        return False, f"String length {string_length} is too long (threshold: 20)"
-    
-    # Many binary rules + long string = probably too slow
-    if num_binary_rules > 10 and string_length > 10:
-        return False, f"Too many binary rules ({num_binary_rules}) for string length {string_length}"
+    # If no binary rules, only terminal rules - this is linear and very fast!
+    # Skip heuristic checks and go straight to calculation
+    if num_binary_rules == 0:
+        estimated_operations = estimate_worst_case_operations(grammar, string_length)
+        estimated_seconds = estimated_operations / OPERATIONS_PER_SECOND
+        if estimated_seconds <= 300:  # 5 minutes
+            return True, f"Estimated operations: {estimated_operations:,} (grammar has no binary rules, ~{estimated_seconds:.2f} seconds)"
+        else:
+            return False, f"Estimated operations: {estimated_operations:,} (grammar has no binary rules but ~{estimated_seconds:.2f} seconds exceeds 300 seconds)"
     
     # Estimate how many operations we'll need
+    # The calculation will correctly identify infeasible cases based on actual grammar structure
     estimated_operations = estimate_worst_case_operations(grammar, string_length)
     
     # Key threshold: 1 billion possibilities × 1000x overhead = 1 trillion operations

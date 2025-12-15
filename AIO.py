@@ -905,10 +905,16 @@ def test_membership(grammar: Grammar, string: str) -> bool:
 # ============================================================================
 
 # Rough estimate: how many operations can we do per second?
-# Modern computers can do 10 billion to 1 trillion operations per second.
-# Accounting for ~1000x overhead due to inefficiency, checking, etc.,
-# we use a conservative estimate of 10 billion operations per second. (verified by announcement)
-OPERATIONS_PER_SECOND = 10_000_000_000  # 10 billion operations per second
+# Modern computers can do 100 billion to 1 trillion operations per second.
+# The statement says: "if you have to consider 1 billion possibilities for rules 
+# application combinations that is still a trillion operations or under and should 
+# be doable in a few minutes"
+# This means: 1 billion possibilities × 1000x overhead = 1 trillion operations
+# At 100 billion ops/sec: 1 trillion ops ÷ 100 billion = 10 seconds (feasible)
+# At 1 trillion ops/sec: 1 trillion ops ÷ 1 trillion = 1 second (feasible)
+# We use 100 billion ops/sec as a conservative estimate (lower bound of the range).
+# The 1000x overhead is already accounted for in converting "possibilities" to "operations".
+OPERATIONS_PER_SECOND = 100_000_000_000  # 100 billion operations per second
 
 
 def estimate_worst_case_operations(grammar: Grammar, string_length: int) -> int:
@@ -996,8 +1002,7 @@ def is_feasible(grammar: Grammar, string_length: int) -> Tuple[bool, str]:
     Feasibility Criteria:
         - Empty string (length 0): Always feasible
         - Single character (length 1): Always feasible
-        - Length > 20: Always infeasible (threshold)
-        - Many binary rules + long string: Infeasible
+        - Grammars with no binary rules: Linear time, feasible for very long strings
         - Otherwise: Based on estimated operations vs. time limit
     
     Args:
@@ -1021,9 +1026,10 @@ def is_feasible(grammar: Grammar, string_length: int) -> Tuple[bool, str]:
         Reason: Estimated worst-case time: 0.0026 seconds (within 60 seconds)
     
     Note:
-        Uses OPERATIONS_PER_SECOND constant (10 billion ops/sec) for time
+        Uses OPERATIONS_PER_SECOND constant (100 billion ops/sec) for time
         estimation. This accounts for modern hardware capabilities (100 billion
-        to 1 trillion ops/sec) with ~1000x overhead. Actual performance may
+        to 1 trillion ops/sec). The 1000x overhead is already accounted for
+        in converting "possibilities" to "operations". Actual performance may
         vary based on hardware and grammar structure.
     """
     # Negative length doesn't make sense
@@ -1041,15 +1047,18 @@ def is_feasible(grammar: Grammar, string_length: int) -> Tuple[bool, str]:
     if string_length == 1:
         return True, "Single character check is very fast"
     
-    # Very long strings are definitely too slow
-    if string_length > 20:
-        return False, f"String length {string_length} is too long (threshold: 20)"
-    
-    # Many binary rules + long string = probably too slow
-    if num_binary_rules > 10 and string_length > 10:
-        return False, f"Too many binary rules ({num_binary_rules}) for string length {string_length}"
+    # If no binary rules, only terminal rules - this is linear and very fast!
+    # Skip heuristic checks and go straight to calculation
+    if num_binary_rules == 0:
+        estimated_operations = estimate_worst_case_operations(grammar, string_length)
+        estimated_seconds = estimated_operations / OPERATIONS_PER_SECOND
+        if estimated_seconds <= 300:  # 5 minutes
+            return True, f"Estimated operations: {estimated_operations:,} (grammar has no binary rules, ~{estimated_seconds:.2f} seconds)"
+        else:
+            return False, f"Estimated operations: {estimated_operations:,} (grammar has no binary rules but ~{estimated_seconds:.2f} seconds exceeds 300 seconds)"
     
     # Estimate how many operations we'll need
+    # The calculation will correctly identify infeasible cases based on actual grammar structure
     estimated_operations = estimate_worst_case_operations(grammar, string_length)
     
     # Key threshold: 1 billion possibilities × 1000x overhead = 1 trillion operations
